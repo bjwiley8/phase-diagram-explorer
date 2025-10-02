@@ -17,8 +17,9 @@ function splitBranches(points: TP[]) {
   const left: TP[] = []; const right: TP[] = [];
   for (const r of rows) {
     r.xs.sort((a,b)=>a-b);
-    if (r.xs.length === 1) {
-      left.push({ T:r.T, x:r.xs[0] });
+    if (r.xs.length < 2) {
+      // Only plot branches when both endpoints exist at this T (two-phase region)
+      left.push({ T:r.T, x: Number.NaN });
       right.push({ T:r.T, x: Number.NaN });
     } else {
       left.push({ T:r.T, x:r.xs[0] });
