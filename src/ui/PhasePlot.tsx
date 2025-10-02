@@ -28,6 +28,21 @@ function splitBranches(points: TP[]) {
   return { left, right };
 }
 
+function toSegments(arr: TP[]): { x:number[]; y:number[] }[] {
+  const segs: { x:number[]; y:number[] }[] = [];
+  let curX: number[] = [];
+  let curY: number[] = [];
+  for (const p of arr) {
+    if (!isFinite(p.x)) {
+      if (curX.length > 0) { segs.push({ x: curX, y: curY }); curX = []; curY = []; }
+      continue;
+    }
+    curX.push(p.x); curY.push(p.T);
+  }
+  if (curX.length > 0) segs.push({ x: curX, y: curY });
+  return segs;
+}
+
 function usePlotly(id: string, data: any[], layout: any) {
   React.useEffect(() => { Plotly.newPlot(id, data as any, layout as any, {displayModeBar: false}); return () => { Plotly.purge(id); }; }, [id, JSON.stringify(data), JSON.stringify(layout)]);
 }
@@ -38,21 +53,12 @@ export default function PhasePlot(props: { T: number; eqs: {xA:number;xB:number}
   const L = splitBranches(liq);
   const S = splitBranches(sol);
   // Prepare arrays with nulls where a branch is absent, to avoid horizontal stitches
-  const xL = L.left.map(p=>isNaN(p.x)? null : p.x);
-  const tL = L.left.map(p=>p.T);
-  const xL2 = L.right.map(p=>isNaN(p.x)? null : p.x);
-  const tL2 = L.right.map(p=>p.T);
-  const xS = S.left.map(p=>isNaN(p.x)? null : p.x);
-  const tS = S.left.map(p=>p.T);
-  const xS2 = S.right.map(p=>isNaN(p.x)? null : p.x);
-  const tS2 = S.right.map(p=>p.T);
-
-  const data: any[] = [
-    { x: xS, y: tS, name: 'solidus (left)', type: 'scatter', mode: 'lines', line:{ color:'#d62728' } },
-    { x: xS2, y: tS2, name: 'solidus (right)', type: 'scatter', mode: 'lines', line:{ color:'#d62728', dash:'dot' } },
-    { x: xL, y: tL, name: 'liquidus (left)', type: 'scatter', mode: 'lines', line:{ color:'#1f77b4' } },
-    { x: xL2, y: tL2, name: 'liquidus (right)', type: 'scatter', mode: 'lines', line:{ color:'#1f77b4', dash:'dot' } },
-  ];
+  const data: any[] = [];
+  // Build segment traces to prevent unintended horizontal connections
+  toSegments(S.left).forEach((seg, i)=> data.push({ x: seg.x, y: seg.y, name: i===0? 'solidus (left)' : undefined, type:'scatter', mode:'lines', line:{ color:'#d62728' }, connectgaps:false }));
+  toSegments(S.right).forEach((seg, i)=> data.push({ x: seg.x, y: seg.y, name: i===0? 'solidus (right)' : undefined, type:'scatter', mode:'lines', line:{ color:'#d62728', dash:'dot' }, connectgaps:false }));
+  toSegments(L.left).forEach((seg, i)=> data.push({ x: seg.x, y: seg.y, name: i===0? 'liquidus (left)' : undefined, type:'scatter', mode:'lines', line:{ color:'#1f77b4' }, connectgaps:false }));
+  toSegments(L.right).forEach((seg, i)=> data.push({ x: seg.x, y: seg.y, name: i===0? 'liquidus (right)' : undefined, type:'scatter', mode:'lines', line:{ color:'#1f77b4', dash:'dot' }, connectgaps:false }));
 
   if (debug?.showTieLines && eqs.length) {
     eqs.forEach((eq,i)=>{
