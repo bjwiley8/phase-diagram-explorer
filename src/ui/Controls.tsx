@@ -1,11 +1,37 @@
 import React from 'react';
+
+function Info(props: { text: string }) {
+  return (
+    <span
+      title={props.text}
+      aria-label="info"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 14,
+        height: 14,
+        fontSize: 11,
+        borderRadius: '50%',
+        border: '1px solid #5b9bd5',
+        color: '#1f77b4',
+        background: '#eef5ff',
+        cursor: 'help',
+        userSelect: 'none'
+      }}
+    >i</span>
+  );
+}
 import { ABParams, defaultAB } from '../models/common';
 
-function NumberInput(props: { label: React.ReactNode; title?: string; value: number; step?: number; onChange: (v:number)=>void; min?: number; max?: number; width?: number }) {
-  const { label, title, value, step=1, onChange, min, max, width=100 } = props;
+function NumberInput(props: { label: React.ReactNode; title?: string; info?: string; value: number; step?: number; onChange: (v:number)=>void; min?: number; max?: number; width?: number }) {
+  const { label, title, info, value, step=1, onChange, min, max, width=100 } = props;
   return (
     <label style={{display:'inline-flex', alignItems:'center', gap:6, marginRight:12}} title={title}>
-      <span style={{minWidth:120}}>{label}</span>
+      <span style={{minWidth:120, display:'inline-flex', alignItems:'center', gap:4}}>
+        {label}
+        {info ? <Info text={info}/> : null}
+      </span>
       <input type="number" value={value} onChange={e=>onChange(parseFloat(e.target.value))} step={step} min={min} max={max} style={{width}} />
     </label>
   );
@@ -24,7 +50,7 @@ export default function Controls(props: {
       <div style={{display:'flex', alignItems:'center', gap:8}}>
         <strong title="Current temperature used for g(x,T), tie-lines, and the vertical guide on the plots.">Temperature (K)</strong>
         <input type="range" min={300} max={2000} step={1} value={T} onChange={e=>onT(parseFloat(e.target.value))} style={{width:240}}/>
-        <NumberInput label={<span>T</span>} title="Current temperature (K)." value={T} step={1} onChange={onT} min={300} max={2000} width={90}/>
+        <NumberInput label={<span>T</span>} title="Current temperature (K)." info="Sets both plots at this temperature and the tie‑line(s)." value={T} step={1} onChange={onT} min={300} max={2000} width={90}/>
       </div>
 
       <div style={{borderLeft:'1px solid #ddd', paddingLeft:12}}>
@@ -32,42 +58,48 @@ export default function Controls(props: {
         <div>
           <NumberInput
             label={<span>Ω<sup>sol</sup></span>}
-            title="Regular‑solution interaction parameter in the solid (J/mol). Positive widens the miscibility gap; negative narrows it."
+            title="Regular‑solution interaction parameter in the solid (J/mol)."
+            info="Positive → solid unmixing tendency (wider two‑phase region). Negative → favors mixing (narrower gap)."
             value={params.OmegaSol}
             step={100}
             onChange={v=>onParams({...params, OmegaSol:v})}
           />
           <NumberInput
             label={<span>Ω<sup>liq</sup></span>}
-            title="Regular‑solution interaction parameter in the liquid (J/mol). Positive favors liquid unmixing; negative smooths the liquid curve."
+            title="Regular‑solution interaction parameter in the liquid (J/mol)."
+            info="Positive → liquid unmixing tendency (dome rises). Negative → smoother liquid curve, smaller gap."
             value={params.OmegaLiq}
             step={100}
             onChange={v=>onParams({...params, OmegaLiq:v})}
           />
           <NumberInput
             label={<span>T<sub>m</sub>(A)</span>}
-            title="Melting temperature of pure A (K). With ΔS_f(A), sets H_f(A)=T_m(A)·ΔS_f(A) in the liquid reference."
+            title="Melting temperature of pure A (K)."
+            info="With ΔS_f(A), sets H_f(A)=T_m(A)·ΔS_f(A) for the liquid reference; raises or lowers the A‑side liquidus."
             value={params.TmA}
             step={1}
             onChange={v=>onParams({...params, TmA:v})}
           />
           <NumberInput
             label={<span>T<sub>m</sub>(B)</span>}
-            title="Melting temperature of pure B (K). With ΔS_f(B), sets H_f(B)=T_m(B)·ΔS_f(B) in the liquid reference."
+            title="Melting temperature of pure B (K)."
+            info="With ΔS_f(B), sets H_f(B)=T_m(B)·ΔS_f(B) for the liquid reference; raises or lowers the B‑side liquidus."
             value={params.TmB}
             step={1}
             onChange={v=>onParams({...params, TmB:v})}
           />
           <NumberInput
             label={<span>ΔS<sub>f</sub>(A)</span>}
-            title="Entropy of fusion of pure A (J/mol/K). Higher raises the liquid free energy below T_m(A) and increases asymmetry on the A side."
+            title="Entropy of fusion of pure A (J/mol/K)."
+            info="Higher → liquid free energy sits higher below T_m(A); increases A‑side asymmetry and raises liquidus near A."
             value={params.SfA}
             step={0.1}
             onChange={v=>onParams({...params, SfA:v})}
           />
           <NumberInput
             label={<span>ΔS<sub>f</sub>(B)</span>}
-            title="Entropy of fusion of pure B (J/mol/K). Higher raises the liquid free energy below T_m(B) and increases asymmetry on the B side."
+            title="Entropy of fusion of pure B (J/mol/K)."
+            info="Higher → liquid free energy sits higher below T_m(B); increases B‑side asymmetry and raises liquidus near B."
             value={params.SfB}
             step={0.1}
             onChange={v=>onParams({...params, SfB:v})}
@@ -79,16 +111,22 @@ export default function Controls(props: {
       <div style={{borderLeft:'1px solid #ddd', paddingLeft:12}}>
         <strong>Sweep</strong>
         <div>
-          <NumberInput label={<span>T<sub>min</sub></span>} title="Lowest temperature used when tracing the phase boundaries (K)." value={sweep.Tmin} step={1} onChange={v=>onSweep({...sweep, Tmin:v})} />
-          <NumberInput label={<span>T<sub>max</sub></span>} title="Highest temperature used when tracing the phase boundaries (K)." value={sweep.Tmax} step={1} onChange={v=>onSweep({...sweep, Tmax:v})} />
-          <NumberInput label={<span>ΔT</span>} title="Temperature increment used during the sweep (K). Smaller steps give smoother lines." value={sweep.dT} step={1} onChange={v=>onSweep({...sweep, dT:v})} />
+          <NumberInput label={<span>T<sub>min</sub></span>} title="Lowest temperature used when tracing the phase boundaries (K)." info="Lower this to reveal more of the two‑phase region on both ends." value={sweep.Tmin} step={1} onChange={v=>onSweep({...sweep, Tmin:v})} />
+          <NumberInput label={<span>T<sub>max</sub></span>} title="Highest temperature used when tracing the phase boundaries (K)." info="Raise this to see the full crest of the coexistence dome." value={sweep.Tmax} step={1} onChange={v=>onSweep({...sweep, Tmax:v})} />
+          <NumberInput label={<span>ΔT</span>} title="Temperature increment used during the sweep (K)." info="Smaller steps → smoother curves; larger steps → faster preview." value={sweep.dT} step={1} onChange={v=>onSweep({...sweep, dT:v})} />
         </div>
       </div>
 
       <div style={{borderLeft:'1px solid #ddd', paddingLeft:12}}>
         <strong>Pedagogy</strong>
-        <label style={{marginLeft:8}} title="Show g′(x,T). Equality of slopes at the tie‑line endpoints → equal chemical potentials."><input type="checkbox" checked={showDerivs.g1} onChange={e=>onShowDerivs({...showDerivs, g1:e.target.checked})}/> show g′</label>
-        <label style={{marginLeft:8}} title="Show g″(x,T). Inflection g″=0 marks spinodals; we require g″≥0 at the endpoints."><input type="checkbox" checked={showDerivs.g2} onChange={e=>onShowDerivs({...showDerivs, g2:e.target.checked})}/> show g″</label>
+        <label style={{marginLeft:8}}>
+          <input type="checkbox" checked={showDerivs.g1} onChange={e=>onShowDerivs({...showDerivs, g1:e.target.checked})}/> show g′
+          <span style={{marginLeft:6}}><Info text="Show g′(x,T). Equality of slopes at the tie‑line endpoints ↔ equal chemical potentials."/></span>
+        </label>
+        <label style={{marginLeft:8}}>
+          <input type="checkbox" checked={showDerivs.g2} onChange={e=>onShowDerivs({...showDerivs, g2:e.target.checked})}/> show g″
+          <span style={{marginLeft:6}}><Info text="Show g″(x,T). Spinodal condition g″=0; we require g″≥0 at endpoints (local stability)."/></span>
+        </label>
       </div>
 
       <div style={{borderLeft:'1px solid #ddd', paddingLeft:12}}>
