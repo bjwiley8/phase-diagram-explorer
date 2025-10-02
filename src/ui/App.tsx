@@ -14,14 +14,19 @@ export default function App() {
   const [showDerivs, setShowDerivs] = useState({ g1: false, g2: false });
   const [sweep, setSweep] = useState({ Tmin: 900, Tmax: 1400, dT: 10 });
   const [residuals, setResiduals] = useState<number[]>([]);
+  const [debug, setDebug] = useState({ showMarkers: false, showTieLines: true });
 
   const model = useMemo(() => makePeltonAB(params), [params]);
 
-  const eq = useMemo(() => {
-    const r = solveCommonTangent(model, 'liq', 'sol', T, 0.2, 0.8);
-    if (!r.ok) return null;
-    if (!isStableContact(model, 'liq', 'sol', T, r.xA, r.xB)) return null;
-    return r;
+  const eqs = useMemo(() => {
+    const sols: {xA:number;xB:number}[] = [];
+    const r1 = solveCommonTangent(model, 'liq', 'sol', T, 0.2, 0.8);
+    if (r1.ok && isStableContact(model, 'liq','sol', T, r1.xA, r1.xB)) sols.push({xA:r1.xA, xB:r1.xB});
+    const r2 = solveCommonTangent(model, 'liq', 'sol', T, 0.8, 0.2);
+    if (r2.ok && isStableContact(model, 'liq','sol', T, r2.xA, r2.xB)) {
+      if (!sols.some(s=>Math.abs(s.xA-r2.xA)<1e-4 && Math.abs(s.xB-r2.xB)<1e-4)) sols.push({xA:r2.xA, xB:r2.xB});
+    }
+    return sols;
   }, [model, T]);
 
   const traces = useMemo(() => sweepTemperature(model, [['liq','sol']], sweep.Tmin, sweep.Tmax, sweep.dT), [model, sweep]);
@@ -40,10 +45,12 @@ export default function App() {
         onSweep={setSweep}
         showDerivs={showDerivs}
         onShowDerivs={setShowDerivs}
+        debug={debug}
+        onDebug={setDebug}
       />
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', padding:'8px'}}>
-        <GXPlot model={model} T={T} eq={eq} showDerivs={showDerivs} />
-        <PhasePlot T={T} eq={eq} traces={traces} />
+        <GXPlot model={model} T={T} eqs={eqs} showDerivs={showDerivs} />
+        <PhasePlot T={T} eqs={eqs} traces={traces} debug={debug} />
       </div>
       <div style={{padding:'8px'}}>
         <Residuals residuals={residuals} />
@@ -51,4 +58,3 @@ export default function App() {
     </div>
   );
 }
-

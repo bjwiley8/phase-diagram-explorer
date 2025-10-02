@@ -32,8 +32,8 @@ function usePlotly(id: string, data: any[], layout: any) {
   React.useEffect(() => { Plotly.newPlot(id, data as any, layout as any, {displayModeBar: false}); return () => { Plotly.purge(id); }; }, [id, JSON.stringify(data), JSON.stringify(layout)]);
 }
 
-export default function PhasePlot(props: { T: number; eq: {xA:number;xB:number}|null; traces: Traces }) {
-  const { T, eq, traces } = props;
+export default function PhasePlot(props: { T: number; eqs: {xA:number;xB:number}[]; traces: Traces; debug?: {showMarkers:boolean; showTieLines:boolean} }) {
+  const { T, eqs, traces, debug } = props;
   const liq = traces.liq; const sol = traces.sol;
   const L = splitBranches(liq);
   const S = splitBranches(sol);
@@ -54,10 +54,16 @@ export default function PhasePlot(props: { T: number; eq: {xA:number;xB:number}|
     { x: xL2, y: tL2, name: 'liquidus (right)', type: 'scatter', mode: 'lines', line:{ color:'#1f77b4', dash:'dot' } },
   ];
 
-  if (eq) {
-    data.push({ x:[eq.xA, eq.xB], y:[T, T], name:'tie-line at T', type:'scatter', mode:'lines', line:{ color:'#777', dash:'dash'}, showlegend:false });
-    data.push({ x:[eq.xA], y:[T], name:'x_liq', type:'scatter', mode:'markers', marker:{ color:'#1f77b4', size:8 } });
-    data.push({ x:[eq.xB], y:[T], name:'x_sol', type:'scatter', mode:'markers', marker:{ color:'#d62728', size:8 } });
+  if (debug?.showTieLines && eqs.length) {
+    eqs.forEach((eq,i)=>{
+      data.push({ x:[eq.xA, eq.xB], y:[T, T], name:`tie-line ${i+1} at T`, type:'scatter', mode:'lines', line:{ color:'#777', dash: i? 'dot':'dash'}, showlegend:false });
+    });
+  }
+  if (debug?.showMarkers && eqs.length) {
+    eqs.forEach((eq,i)=>{
+      data.push({ x:[eq.xA], y:[T], name:`x_liq ${i+1}`, type:'scatter', mode:'markers', marker:{ color:'#1f77b4', size:8 } });
+      data.push({ x:[eq.xB], y:[T], name:`x_sol ${i+1}`, type:'scatter', mode:'markers', marker:{ color:'#d62728', size:8 } });
+    });
   }
 
   const layout: any = {

@@ -16,8 +16,9 @@ export default function Controls(props: {
   params: ABParams; onParams: (p:ABParams)=>void;
   sweep: {Tmin:number;Tmax:number;dT:number}; onSweep: (s:{Tmin:number;Tmax:number;dT:number})=>void;
   showDerivs: { g1: boolean; g2: boolean }; onShowDerivs: (s:{g1:boolean; g2:boolean})=>void;
+  debug?: { showMarkers:boolean; showTieLines:boolean }; onDebug?: (d:{showMarkers:boolean; showTieLines:boolean})=>void;
 }) {
-  const { T, onT, params, onParams, sweep, onSweep, showDerivs, onShowDerivs } = props;
+  const { T, onT, params, onParams, sweep, onSweep, showDerivs, onShowDerivs, debug, onDebug } = props;
   return (
     <div style={{padding:'8px', borderBottom:'1px solid #ddd', display:'flex', flexWrap:'wrap', gap:'10px', alignItems:'center'}}>
       <div style={{display:'flex', alignItems:'center', gap:8}}>
@@ -53,7 +54,12 @@ export default function Controls(props: {
         <label style={{marginLeft:8}}><input type="checkbox" checked={showDerivs.g1} onChange={e=>onShowDerivs({...showDerivs, g1:e.target.checked})}/> show g'</label>
         <label style={{marginLeft:8}}><input type="checkbox" checked={showDerivs.g2} onChange={e=>onShowDerivs({...showDerivs, g2:e.target.checked})}/> show g''</label>
       </div>
+
+      <div style={{borderLeft:'1px solid #ddd', paddingLeft:12}}>
+        <strong>Debug</strong>
+        <label style={{marginLeft:8}}><input type="checkbox" checked={!!debug?.showMarkers} onChange={e=>onDebug && onDebug({showMarkers:e.target.checked, showTieLines: debug?.showTieLines ?? true})}/> markers</label>
+        <label style={{marginLeft:8}}><input type="checkbox" checked={!!debug?.showTieLines} onChange={e=>onDebug && onDebug({showMarkers: debug?.showMarkers ?? false, showTieLines:e.target.checked})}/> tie‑line(s) at T</label>
+      </div>
     </div>
   );
 }
-
