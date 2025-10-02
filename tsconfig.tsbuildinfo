@@ -1,0 +1,1 @@
+{"root":["./src/declarations.d.ts","./src/main.tsx","./src/models/common.ts","./src/models/reference.ts","./src/models/systems/peltonab.ts","./src/solver/sweep.ts","./src/solver/tangent.ts","./src/ui/app.tsx","./src/ui/controls.tsx","./src/ui/gxplot.tsx","./src/ui/phaseplot.tsx","./src/ui/residuals.tsx"],"version":"5.9.3"}
