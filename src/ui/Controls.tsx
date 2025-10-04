@@ -1,25 +1,66 @@
 import React from 'react';
 
-function Info(props: { text: string }) {
+function InfoButton(props: { text: string }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLSpanElement>(null);
+
+  React.useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  const btnStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 16,
+    height: 16,
+    fontSize: 11,
+    borderRadius: '50%',
+    border: '1px solid #5b9bd5',
+    color: '#1f77b4',
+    background: '#eef5ff',
+    cursor: 'pointer',
+    userSelect: 'none',
+    padding: 0,
+    lineHeight: '14px'
+  };
+
+  const tipStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '20px',
+    left: 0,
+    maxWidth: 280,
+    background: '#fff',
+    color: '#222',
+    border: '1px solid #cbd5e1',
+    borderRadius: 6,
+    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+    padding: '8px 10px',
+    zIndex: 1000,
+    fontSize: 12
+  };
+
   return (
-    <span
-      title={props.text}
-      aria-label="info"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 14,
-        height: 14,
-        fontSize: 11,
-        borderRadius: '50%',
-        border: '1px solid #5b9bd5',
-        color: '#1f77b4',
-        background: '#eef5ff',
-        cursor: 'help',
-        userSelect: 'none'
-      }}
-    >i</span>
+    <span ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+      <button type="button" aria-label="info" style={btnStyle} onClick={() => setOpen(o => !o)} title={props.text}>i</button>
+      {open && (
+        <div role="tooltip" style={tipStyle}>
+          {props.text}
+        </div>
+      )}
+    </span>
   );
 }
 import { ABParams, defaultAB } from '../models/common';
@@ -30,7 +71,7 @@ function NumberInput(props: { label: React.ReactNode; title?: string; info?: str
     <label style={{display:'inline-flex', alignItems:'center', gap:6, marginRight:12}} title={title}>
       <span style={{minWidth:120, display:'inline-flex', alignItems:'center', gap:4}}>
         {label}
-        {info ? <Info text={info}/> : null}
+        {info ? <InfoButton text={info}/> : null}
       </span>
       <input type="number" value={value} onChange={e=>onChange(parseFloat(e.target.value))} step={step} min={min} max={max} style={{width}} />
     </label>
@@ -119,13 +160,13 @@ export default function Controls(props: {
 
       <div style={{borderLeft:'1px solid #ddd', paddingLeft:12}}>
         <strong>Pedagogy</strong>
-        <label style={{marginLeft:8}}>
+        <label style={{marginLeft:8, display:'inline-flex', alignItems:'center', gap:6}}>
           <input type="checkbox" checked={showDerivs.g1} onChange={e=>onShowDerivs({...showDerivs, g1:e.target.checked})}/> show g′
-          <span style={{marginLeft:6}}><Info text="Show g′(x,T). Equality of slopes at the tie‑line endpoints ↔ equal chemical potentials."/></span>
+          <InfoButton text="Show g′(x,T). Equality of slopes at the tie‑line endpoints ↔ equal chemical potentials."/>
         </label>
-        <label style={{marginLeft:8}}>
+        <label style={{marginLeft:8, display:'inline-flex', alignItems:'center', gap:6}}>
           <input type="checkbox" checked={showDerivs.g2} onChange={e=>onShowDerivs({...showDerivs, g2:e.target.checked})}/> show g″
-          <span style={{marginLeft:6}}><Info text="Show g″(x,T). Spinodal condition g″=0; we require g″≥0 at endpoints (local stability)."/></span>
+          <InfoButton text="Show g″(x,T). Spinodal condition g″=0; we require g″≥0 at endpoints (local stability)."/>
         </label>
       </div>
 
